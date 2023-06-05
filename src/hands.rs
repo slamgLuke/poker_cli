@@ -182,7 +182,7 @@ fn is_full_house(cards: &[Card]) -> Option<Hand> {
         } else if *count == 2 {
             match pair {
                 None => pair = Some(*rank),
-                // if there's already a pair, use new pair is higher
+                // if there's already a pair, use new pair only if higher
                 Some(current_rank) => {
                     if *rank > current_rank {
                         pair = Some(*rank);
