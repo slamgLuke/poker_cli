@@ -1,0 +1,69 @@
+mod poker;
+
+fn main() {
+    let john = poker::Player::new(String::from("John"));
+    let man = poker::Player::new("Man".into());
+    let p3 = poker::Player::new("p3".to_string());
+    let players = vec![john, man, p3];
+
+    let game = poker::Game::new(players, true);
+    game.print_table();
+
+    john.calculate_hand(&game);
+}
+
+// tests
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn hand_cmp() {
+        use crate::poker::Hand::*;
+        use crate::poker::Rank::*;
+        use std::cmp::Ordering::*;
+
+        let hand1_1 = Pair(Ten, Nine, Eight, Two);
+        let hand1_2 = Pair(Ten, Nine, Eight, Three);
+        assert_eq!(hand1_1.compare(&hand1_2), Less);
+        assert_eq!(hand1_2.compare(&hand1_1), Greater);
+
+        let hand2_1 = TwoPair(Jack, Eight, Four);
+        let hand2_2 = ThreeOfAKind(Jack, Eight, Four);
+        assert_eq!(hand2_2.compare(&hand2_1), Greater);
+        assert_eq!(hand2_1.compare(&hand2_2), Less);
+
+        let hand3_1 = FourOfAKind(Seven, Two);
+        let hand3_2 = FourOfAKind(Seven, Five);
+        let hand3_3 = FourOfAKind(Nine, Four);
+        assert_eq!(hand3_1.compare(&hand3_2), Less);
+        assert_eq!(hand3_1.compare(&hand3_3), Less);
+        assert_eq!(hand3_2.compare(&hand3_3), Less);
+        assert_eq!(hand3_2.compare(&hand3_1), Greater);
+        assert_eq!(hand3_3.compare(&hand3_1), Greater);
+        assert_eq!(hand3_3.compare(&hand3_2), Greater);
+
+        assert_eq!(RoyalFlush.compare(&RoyalFlush), Equal);
+        assert_eq!(RoyalFlush.compare(&StraightFlush(King)), Greater);
+        assert_eq!(StraightFlush(King).compare(&RoyalFlush), Less);
+
+        let hand4_1 = StraightFlush(Ten);
+        let hand4_2 = Flush(Jack);
+        assert_eq!(hand4_1.compare(&hand4_2), Greater);
+        assert_eq!(hand4_2.compare(&hand4_1), Less);
+
+        let hand5_1 = Straight(Ten);
+        let hand5_2 = Straight(Ten);
+        assert_eq!(hand5_1.compare(&hand5_2), Equal);
+        assert_eq!(hand5_2.compare(&hand5_1), Equal);
+
+        let hand6_1 = FullHouse(Ten, Two);
+        let hand6_2 = FullHouse(Ten, Three);
+        assert_eq!(hand6_1.compare(&hand6_2), Less);
+        assert_eq!(hand6_2.compare(&hand6_1), Greater);
+
+        let hand7_1 = HighCard(Ten, Nine, Eight, Two, Three);
+        let hand7_2 = HighCard(Ten, Nine, Eight, Two, Four);
+        assert_eq!(hand7_1.compare(&hand7_2), Less);
+        assert_eq!(hand7_2.compare(&hand7_1), Greater);
+        assert_eq!(hand7_1.compare(&hand7_1), Equal);
+    }
+}
