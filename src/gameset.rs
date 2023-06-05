@@ -1,5 +1,7 @@
-use rand::seq::SliceRandom;
+// gameset.rs
+use crate::hands::*;
 use crate::poker::*;
+use rand::seq::SliceRandom;
 
 pub struct Player {
     pub name: String,
@@ -16,23 +18,14 @@ impl Player {
         }
     }
 
-    pub fn calculate_hand(&self, game: &Game) -> Hand {
-        let mut cards = self
+    pub fn hand(&self, game: &Game) -> Hand {
+        let cards: Vec<Card> = self
             .hole
             .iter()
             .chain(game.table.iter())
+            .map(|c| *c)
             .collect::<Vec<_>>();
-        // sort cards by rank
-        cards.sort_by(|a, b| b.compare(a));
-
-        println!("{}'s cards: {:?}", self.name, cards);
-        return Hand::HighCard(
-            cards[0].rank,
-            cards[1].rank,
-            cards[2].rank,
-            cards[3].rank,
-            cards[4].rank,
-        );
+        calculate_hand(cards.as_slice())
     }
 }
 
@@ -90,10 +83,6 @@ impl Game {
         for _ in 0..TABLE_SIZE {
             self.table.push(self.deck.pop().unwrap());
         }
-    }
-
-    fn winner(&self) -> &Player {
-        &self.players[0]
     }
 
     pub fn print_table(&self) {

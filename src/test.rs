@@ -1,4 +1,6 @@
-use crate::poker::{Hand::*, Rank::*, Suit::*, *};
+// test.rs
+use crate::poker::{Rank::*, Suit::*, *};
+use crate::hands::{Hand::*, *};
 use std::cmp::Ordering::*;
 
 //
@@ -102,16 +104,43 @@ fn hand_calc_2() {
 }
 
 #[test]
-fn hand_calc_3() {
+fn hand_calc_3_1() {
     let hand_3 = vec![
         Card { rank: Ten, suit: Hearts },
         Card { rank: Nine, suit: Spades },
         Card { rank: Ten, suit: Diamonds },
         Card { rank: Eight, suit: Clubs },
         Card { rank: Two, suit: Hearts },
-        Card { rank: Three, suit: Spades },
         Card { rank: Ace, suit: Clubs },
         Card { rank: Ace, suit: Diamonds },
+    ];
+    assert_eq!(calculate_hand(&hand_3), TwoPair(Ace, Ten, Nine));
+}
+
+#[test]
+fn hand_calc_3_2() {
+    let hand_3 = vec![
+        Card { rank: Ten, suit: Hearts },
+        Card { rank: Nine, suit: Spades },
+        Card { rank: Ten, suit: Diamonds },
+        Card { rank: Eight, suit: Clubs },
+        Card { rank: Two, suit: Hearts },
+        Card { rank: Ace, suit: Clubs },
+        Card { rank: Ace, suit: Diamonds },
+    ];
+    assert_eq!(calculate_hand(&hand_3), TwoPair(Ace, Ten, Nine));
+}
+
+#[test]
+fn hand_calc_3_3() {
+    let hand_3 = vec![
+        Card { rank: Ace, suit: Clubs },
+        Card { rank: Nine, suit: Spades },
+        Card { rank: Eight, suit: Clubs },
+        Card { rank: Eight, suit: Hearts },
+        Card { rank: Ace, suit: Diamonds },
+        Card { rank: Ten, suit: Diamonds },
+        Card { rank: Ten, suit: Hearts },
     ];
     assert_eq!(calculate_hand(&hand_3), TwoPair(Ace, Ten, Nine));
 }
@@ -133,13 +162,12 @@ fn hand_calc_4() {
 #[test]
 fn hand_calc_5() {
     let hand_5 = vec![
+        Card { rank: King, suit: Clubs },
         Card { rank: Nine, suit: Spades },
         Card { rank: Queen, suit: Hearts },
-        Card { rank: Two, suit: Hearts },
-        Card { rank: Three, suit: Spades },
-        Card { rank: King, suit: Clubs },
-        Card { rank: King, suit: Diamonds },
         Card { rank: King, suit: Spades },
+        Card { rank: Three, suit: Spades },
+        Card { rank: King, suit: Diamonds },
         Card { rank: King, suit: Hearts },
     ];
     assert_eq!(calculate_hand(&hand_5), FourOfAKind(King, Queen));
@@ -148,12 +176,11 @@ fn hand_calc_5() {
 #[test]
 fn hand_calc_6() {
     let hand_6 = vec![
-        Card { rank: Five, suit: Spades },
-        Card { rank: Two, suit: Hearts },
-        Card { rank: Seven, suit: Hearts },
         Card { rank: Three, suit: Hearts },
+        Card { rank: Seven, suit: Hearts },
         Card { rank: Jack, suit: Hearts },
         Card { rank: Ten, suit: Diamonds },
+        Card { rank: Two, suit: Hearts },
         Card { rank: Three, suit: Spades },
         Card { rank: Nine, suit: Hearts },
     ];
@@ -161,22 +188,35 @@ fn hand_calc_6() {
 }
 
 #[test]
-fn hand_calc_7() {
+fn hand_calc_7_1() {
     let hand_7 = vec![
-        Card { rank: Five, suit: Spades },
-        Card { rank: Two, suit: Hearts },
-        Card { rank: Seven, suit: Diamonds },
-        Card { rank: Three, suit: Diamonds },
-        Card { rank: Jack, suit: Hearts },
         Card { rank: Ten, suit: Diamonds },
-        Card { rank: Eight, suit: Spades },
-        Card { rank: Nine, suit: Hearts },
+        Card { rank: Eight, suit: Diamonds },
+        Card { rank: Seven, suit: Diamonds },
+        Card { rank: Three, suit: Spades },
+        Card { rank: Nine, suit: Diamonds },
+        Card { rank: Six, suit: Hearts },
+        Card { rank: Jack, suit: Diamonds },
     ];
-    assert_eq!(calculate_hand(&hand_7), Straight(Jack));
+    assert_eq!(calculate_hand(&hand_7), StraightFlush(Jack));
 }
 
 #[test]
-fn hand_calc_8() {
+fn hand_calc_7_2() {
+    let hand_7 = vec![
+        Card { rank: Queen, suit: Clubs },
+        Card { rank: Jack, suit: Clubs },
+        Card { rank: Ten, suit: Clubs },
+        Card { rank: Four, suit: Spades },
+        Card { rank: Nine, suit: Clubs },
+        Card { rank: Ace, suit: Diamonds },
+        Card { rank: King, suit: Clubs },
+    ];
+    assert_eq!(calculate_hand(&hand_7), StraightFlush(King));
+}
+
+#[test]
+fn hand_calc_8_1() {
     let hand_8 = vec![
         Card { rank: Three, suit: Spades },
         Card { rank: Seven, suit: Hearts },
@@ -187,6 +227,65 @@ fn hand_calc_8() {
         Card { rank: Ace, suit: Spades },
     ];
     assert_eq!(calculate_hand(&hand_8), Straight(Five));
+}
+
+#[test]
+fn hand_calc_8_2() {
+    let hand_8 = vec![
+        Card { rank: Queen, suit: Clubs },
+        Card { rank: Queen, suit: Clubs },
+        Card { rank: Jack, suit: Clubs },
+        Card { rank: Four, suit: Spades },
+        Card { rank: Ten, suit: Clubs },
+        Card { rank: Ace, suit: Clubs },
+        Card { rank: King, suit: Clubs },
+    ];
+    assert_eq!(calculate_hand(&hand_8), RoyalFlush);
+}
+
+#[test]
+fn hand_calc_9() {
+    let hand_9 = vec![
+        Card { rank: Queen, suit: Clubs },
+        Card { rank: Jack, suit: Clubs },
+        Card { rank: Ten, suit: Clubs },
+        Card { rank: Four, suit: Spades },
+        Card { rank: Nine, suit: Clubs },
+        Card { rank: Ace, suit: Clubs },
+        Card { rank: King, suit: Clubs },
+    ];
+    assert_eq!(calculate_hand(&hand_9), RoyalFlush);
+}
+
+
+
+#[test]
+fn hand_calc_10() {
+    let hand_10 = vec![
+        Card { rank: Six, suit: Clubs },
+        Card { rank: Nine, suit: Clubs },
+        Card { rank: Eight, suit: Clubs },
+        Card { rank: Five, suit: Clubs },
+        Card { rank: Three, suit: Clubs },
+        Card { rank: Seven, suit: Clubs },
+        Card { rank: Ten, suit: Spades },
+    ];
+    assert_eq!(calculate_hand(&hand_10), StraightFlush(Nine));
+
+}
+
+#[test]
+fn hand_calc_11() {
+    let hand_11 = vec![
+        Card { rank: Two, suit: Clubs },
+        Card { rank: Three, suit: Clubs },
+        Card { rank: Two, suit: Hearts },
+        Card { rank: Three, suit: Hearts },
+        Card { rank: Ace, suit: Spades },
+        Card { rank: Ace, suit: Spades },
+        Card { rank: Ace, suit: Spades },
+    ];
+    assert_eq!(calculate_hand(&hand_11), FullHouse(Ace, Three));
 }
 
 
