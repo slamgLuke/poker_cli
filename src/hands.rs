@@ -219,6 +219,11 @@ fn is_flush(cards: &[Card]) -> Option<Hand> {
 fn is_straight(cards: &[Card]) -> Option<Hand> {
     let mut ranks = cards.iter().map(|c| c.rank).collect::<Vec<_>>();
     ranks.sort();
+    // remove duplicates
+    ranks.dedup();
+    if ranks.len() < 5 {
+        return None;
+    }
     // special case for ace low straight
     if ranks[0] == Rank::Two
         && ranks[1] == Rank::Three
@@ -227,11 +232,6 @@ fn is_straight(cards: &[Card]) -> Option<Hand> {
         && ranks[ranks.len() - 1] == Rank::Ace
     {
         return Some(Hand::Straight(Rank::Five));
-    }
-    // remove duplicates
-    ranks.dedup();
-    if ranks.len() < 5 {
-        return None;
     }
     // check for straights in each subset of length 5
     for i in (0..=(ranks.len() - 5)).rev() {

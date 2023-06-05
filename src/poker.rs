@@ -1,7 +1,7 @@
 // poker.rs
 use std::cmp::Ordering;
 
-// Hand: The 2 cards that each player holds
+// Hole: The 2 cards that each player holds
 // Table: The 5 community cards that are shared by all players
 // Deck: The 52 cards used for each game.
 pub const HOLE_SIZE: usize = 2;

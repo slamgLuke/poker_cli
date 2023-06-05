@@ -271,8 +271,6 @@ fn hand_calc_9() {
     assert_eq!(calculate_hand(&hand_9), RoyalFlush);
 }
 
-
-
 #[test]
 fn hand_calc_10() {
     let hand_10 = vec![
@@ -300,6 +298,34 @@ fn hand_calc_11() {
         Card { rank: Ace, suit: Spades },
     ];
     assert_eq!(calculate_hand(&hand_11), FullHouse(Ace, Three));
+}
+
+#[test]
+fn hand_calc_12() {
+    let hand_12 = vec![
+        Card { rank: Two, suit: Spades },
+        Card { rank: Three, suit: Spades },
+        Card { rank: Four, suit: Spades },
+        Card { rank: Five, suit: Spades },
+        Card { rank: Two, suit: Hearts },
+        Card { rank: Six, suit: Diamonds },
+        Card { rank: Ace, suit: Spades },
+    ];
+    assert_eq!(calculate_hand(&hand_12), StraightFlush(Five));
+}
+
+#[test]
+fn hand_calc_13() {
+    let hand_13 = vec![
+        Card { rank: Three, suit: Spades },
+        Card { rank: Three, suit: Diamonds },
+        Card { rank: Two, suit: Clubs },
+        Card { rank: Two, suit: Hearts },
+        Card { rank: Ace, suit: Spades },
+        Card { rank: Five, suit: Hearts },
+        Card { rank: Four, suit: Spades },
+    ];
+    assert_eq!(calculate_hand(&hand_13), Straight(Five));
 }
 
 
