@@ -23,7 +23,7 @@ impl Player {
             .hole
             .iter()
             .chain(game.table.iter())
-            .map(|c| *c)
+            .copied()
             .collect::<Vec<_>>();
         calculate_hand(cards.as_slice())
     }

@@ -3,8 +3,6 @@ use crate::poker::*;
 use std::cmp::Ordering::{self, *};
 use std::collections::HashMap;
 
-
-
 #[derive(Debug, PartialOrd, Ord, PartialEq, Eq)]
 pub enum Hand {
     HighCard(Rank, Rank, Rank, Rank, Rank),
@@ -25,88 +23,70 @@ impl Hand {
         match (self, other) {
             (RoyalFlush, RoyalFlush) => Equal,
             (StraightFlush(max), StraightFlush(o_max)) => max.cmp(o_max),
-            (FourOfAKind(rank, k), FourOfAKind(o_rank, o_k)) => {
-                if rank > o_rank {
-                    Greater
-                } else if rank < o_rank {
-                    Less
-                } else {
-                    k.cmp(o_k)
-                }
-            }
-            (FullHouse(trio, pair), FullHouse(o_trio, o_pair)) => {
-                if trio > o_trio {
-                    Greater
-                } else if trio < o_trio {
-                    Less
-                } else {
-                    pair.cmp(o_pair)
-                }
-            }
+            (FourOfAKind(rank, k), FourOfAKind(o_rank, o_k)) => match rank.cmp(o_rank) {
+                Greater => Greater,
+                Less => Less,
+                Equal => k.cmp(o_k),
+            },
+            (FullHouse(trio, pair), FullHouse(o_trio, o_pair)) => match trio.cmp(o_trio) {
+                Greater => Greater,
+                Less => Less,
+                Equal => pair.cmp(o_pair),
+            },
             (Flush(max), Flush(o_max)) => max.cmp(o_max),
             (Straight(max), Straight(o_max)) => max.cmp(o_max),
             (ThreeOfAKind(trio, k1, k2), ThreeOfAKind(o_trio, o_k1, o_k2)) => {
-                if trio > o_trio {
-                    Greater
-                } else if trio < o_trio {
-                    Less
-                } else if k1 > o_k1 {
-                    Greater
-                } else if k1 < o_k1 {
-                    Less
-                } else {
-                    k2.cmp(o_k2)
+                match trio.cmp(o_trio) {
+                    Greater => Greater,
+                    Less => Less,
+                    Equal => match k1.cmp(o_k1) {
+                        Greater => Greater,
+                        Less => Less,
+                        Equal => k2.cmp(o_k2),
+                    },
                 }
             }
             (TwoPair(pair1, pair2, k), TwoPair(o_pair1, o_pair2, o_k)) => {
-                if pair1 > o_pair1 {
-                    Greater
-                } else if pair1 < o_pair1 {
-                    Less
-                } else if pair2 > o_pair2 {
-                    Greater
-                } else if pair2 < o_pair2 {
-                    Less
-                } else {
-                    k.cmp(o_k)
+                match pair1.cmp(o_pair1) {
+                    Greater => Greater,
+                    Less => Less,
+                    Equal => match pair2.cmp(o_pair2) {
+                        Greater => Greater,
+                        Less => Less,
+                        Equal => k.cmp(o_k),
+                    },
                 }
             }
-            (Pair(pair, k1, k2, k3), Pair(o_pair, o_k1, o_k2, o_k3)) => {
-                if pair > o_pair {
-                    Greater
-                } else if pair < o_pair {
-                    Less
-                } else if k1 > o_k1 {
-                    Greater
-                } else if k1 < o_k1 {
-                    Less
-                } else if k2 > o_k2 {
-                    Greater
-                } else if k2 < o_k2 {
-                    Less
-                } else {
-                    k3.cmp(o_k3)
-                }
-            }
+            (Pair(pair, k1, k2, k3), Pair(o_pair, o_k1, o_k2, o_k3)) => match pair.cmp(o_pair) {
+                Greater => Greater,
+                Less => Less,
+                Equal => match k1.cmp(o_k1) {
+                    Greater => Greater,
+                    Less => Less,
+                    Equal => match k2.cmp(o_k2) {
+                        Greater => Greater,
+                        Less => Less,
+                        Equal => k3.cmp(o_k3),
+                    },
+                },
+            },
             (HighCard(k1, k2, k3, k4, k5), HighCard(o_k1, o_k2, o_k3, o_k4, o_k5)) => {
-                if k1 > o_k1 {
-                    Greater
-                } else if k1 < o_k1 {
-                    Less
-                } else if k2 > o_k2 {
-                    Greater
-                } else if k2 < o_k2 {
-                    Less
-                } else if k3 > o_k3 {
-                    Greater
-                } else if k3 < o_k3 {
-                    Less
-                } else if k4 > o_k4 {
-                    Greater
-                } else if k4 < o_k4 {
-                    Less
-                } else {
-                    k5.cmp(o_k5)
+                match k1.cmp(o_k1) {
+                    Greater => Greater,
+                    Less => Less,
+                    Equal => match k2.cmp(o_k2) {
+                        Greater => Greater,
+                        Less => Less,
+                        Equal => match k3.cmp(o_k3) {
+                            Greater => Greater,
+                            Less => Less,
+                            Equal => match k4.cmp(o_k4) {
+                                Greater => Greater,
+                                Less => Less,
+                                Equal => k5.cmp(o_k5),
+                            },
+                        },
+                    },
                 }
             }
             _ => self.cmp(other),
@@ -121,23 +101,17 @@ pub fn calculate_hand(cards: &[Card]) -> Hand {
         } else {
             return hand;
         }
-    }
-    if let Some(hand) = is_four_of_a_kind(cards) {
+    } else if let Some(hand) = is_four_of_a_kind(cards) {
         return hand;
-    }
-    if let Some(hand) = is_full_house(cards) {
+    } else if let Some(hand) = is_full_house(cards) {
         return hand;
-    }
-    if let Some(hand) = is_flush(cards) {
+    } else if let Some(hand) = is_flush(cards) {
         return hand;
-    }
-    if let Some(hand) = is_straight(cards) {
+    } else if let Some(hand) = is_straight(cards) {
         return hand;
-    }
-    if let Some(hand) = is_three_of_a_kind(cards) {
+    } else if let Some(hand) = is_three_of_a_kind(cards) {
         return hand;
-    }
-    if let Some(hand) = is_pairs(cards) {
+    } else if let Some(hand) = is_pairs(cards) {
         return hand;
     }
     let mut ranks = cards.iter().map(|c| c.rank).collect::<Vec<_>>();
@@ -152,17 +126,21 @@ pub fn calculate_hand(cards: &[Card]) -> Hand {
     )
 }
 
-// functions to check if a set of cards can be made into each hand
+//
+// Functions to check if a set of cards can be made into each hand
+//
 fn is_straight_flush(cards: &[Card]) -> Option<Hand> {
-    let mut new_cards = cards.to_vec();
-    new_cards.sort_by(|a, b| a.rank.cmp(&b.rank));
-
-    if let Some(Hand::Straight(rank_straight)) = is_straight(&new_cards) {
-        if let Some(Hand::Flush(rank_flush)) = is_flush(&new_cards) {
-            if rank_straight == rank_flush {
-                todo!();
-                return Some(Hand::StraightFlush(rank_straight));
-            }
+    // separate cards by suit:
+    let mut suits: HashMap<Suit, Vec<Card>> = HashMap::new();
+    for card in cards.iter() {
+        suits.entry(card.suit).or_insert(Vec::new()).push(*card);
+    }
+    // check for straights in each suit
+    for (_, card_vec) in suits.iter() {
+        if card_vec.len() < 5 {
+            continue;
+        } else if let Some(Hand::Straight(rank)) = is_straight(card_vec.as_slice()) {
+            return Some(Hand::StraightFlush(rank));
         }
     }
     None
@@ -171,6 +149,7 @@ fn is_straight_flush(cards: &[Card]) -> Option<Hand> {
 fn is_four_of_a_kind(cards: &[Card]) -> Option<Hand> {
     let mut ranks = cards.iter().map(|c| c.rank).collect::<Vec<_>>();
     ranks.sort();
+    // separate cards by rank:
     let mut counts: HashMap<Rank, usize> = HashMap::new();
     for rank in ranks.iter() {
         *counts.entry(*rank).or_insert(0) += 1;
@@ -189,18 +168,21 @@ fn is_four_of_a_kind(cards: &[Card]) -> Option<Hand> {
 fn is_full_house(cards: &[Card]) -> Option<Hand> {
     let mut ranks = cards.iter().map(|c| c.rank).collect::<Vec<_>>();
     ranks.sort();
+    // separate cards by rank:
     let mut counts: HashMap<Rank, usize> = HashMap::new();
     for rank in ranks.iter() {
         *counts.entry(*rank).or_insert(0) += 1;
     }
-    let mut trio = None;
-    let mut pair = None;
+    let mut trio: Option<Rank> = None;
+    let mut pair: Option<Rank> = None;
+    // find a trio and pair
     for (rank, count) in counts.iter() {
         if *count == 3 {
             trio = Some(*rank);
         } else if *count == 2 {
             match pair {
                 None => pair = Some(*rank),
+                // if there's already a pair, use new pair is higher
                 Some(current_rank) => {
                     if *rank > current_rank {
                         pair = Some(*rank);
@@ -217,20 +199,19 @@ fn is_full_house(cards: &[Card]) -> Option<Hand> {
 }
 
 fn is_flush(cards: &[Card]) -> Option<Hand> {
-    let mut suits = cards.iter().map(|c| c.suit).collect::<Vec<_>>();
-    suits.sort();
-    let mut counts: HashMap<Suit, usize> = HashMap::new();
-    for suit in suits.iter() {
-        *counts.entry(*suit).or_insert(0) += 1;
+    // separate cards by suit:
+    let mut suits: HashMap<Suit, Vec<Card>> = HashMap::new();
+    for card in cards.iter() {
+        suits.entry(card.suit).or_insert(Vec::new()).push(*card);
     }
-    for (suit, count) in counts.iter() {
-        if *count == 5 {
-            let mut other = suits.clone();
-            other.retain(|s| s != suit);
-            let mut ranks = cards.iter().map(|c| c.rank).collect::<Vec<_>>();
-            ranks.sort();
-            return Some(Hand::Flush(ranks[ranks.len() - 1]));
+    // check for flushes in each suit
+    for (_, card_vec) in suits.iter() {
+        if card_vec.len() < 5 {
+            continue;
         }
+        let mut ranks = card_vec.iter().map(|c| c.rank).collect::<Vec<_>>();
+        ranks.sort();
+        return Some(Hand::Flush(ranks[ranks.len() - 1]));
     }
     None
 }
@@ -247,12 +228,12 @@ fn is_straight(cards: &[Card]) -> Option<Hand> {
     {
         return Some(Hand::Straight(Rank::Five));
     }
-    
+    // remove duplicates
     ranks.dedup();
     if ranks.len() < 5 {
         return None;
     }
-
+    // check for straights in each subset of length 5
     for i in (0..=(ranks.len() - 5)).rev() {
         let mut straight = true;
         for j in i..(i + 5 - 1) {
@@ -271,6 +252,7 @@ fn is_straight(cards: &[Card]) -> Option<Hand> {
 fn is_three_of_a_kind(cards: &[Card]) -> Option<Hand> {
     let mut ranks = cards.iter().map(|c| c.rank).collect::<Vec<_>>();
     ranks.sort();
+    // separate cards by rank:
     let mut counts: HashMap<Rank, usize> = HashMap::new();
     for rank in ranks.iter() {
         *counts.entry(*rank).or_insert(0) += 1;
@@ -293,6 +275,7 @@ fn is_three_of_a_kind(cards: &[Card]) -> Option<Hand> {
 fn is_pairs(cards: &[Card]) -> Option<Hand> {
     let mut ranks = cards.iter().map(|c| c.rank).collect::<Vec<_>>();
     ranks.sort();
+    // separate cards by rank:
     let mut counts: HashMap<Rank, usize> = HashMap::new();
     for rank in ranks.iter() {
         *counts.entry(*rank).or_insert(0) += 1;
@@ -303,6 +286,7 @@ fn is_pairs(cards: &[Card]) -> Option<Hand> {
             pairs.push(*rank);
         }
     }
+    // handle 3 pair case, select highest 2 pairs
     if pairs.len() == 3 {
         let mut other = ranks.clone();
         other.retain(|r| r != &pairs[0] && r != &pairs[1] && r != &pairs[2]);

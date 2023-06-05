@@ -207,12 +207,26 @@ fn hand_calc_7_2() {
         Card { rank: Queen, suit: Clubs },
         Card { rank: Jack, suit: Clubs },
         Card { rank: Ten, suit: Clubs },
-        Card { rank: Four, suit: Spades },
+        Card { rank: Eight, suit: Clubs },
         Card { rank: Nine, suit: Clubs },
         Card { rank: Ace, suit: Diamonds },
         Card { rank: King, suit: Clubs },
     ];
     assert_eq!(calculate_hand(&hand_7), StraightFlush(King));
+}
+
+#[test]
+fn hand_calc_7_3() {
+    let hand_7 = vec![
+        Card { rank: Two, suit: Clubs },
+        Card { rank: Three, suit: Spades },
+        Card { rank: Four, suit: Clubs },
+        Card { rank: Five, suit: Spades },
+        Card { rank: Six, suit: Spades },
+        Card { rank: Five, suit: Spades },
+        Card { rank: Five, suit: Spades },
+    ];
+    assert_eq!(calculate_hand(&hand_7), Flush(Six));
 }
 
 #[test]
@@ -235,7 +249,7 @@ fn hand_calc_8_2() {
         Card { rank: Queen, suit: Clubs },
         Card { rank: Queen, suit: Clubs },
         Card { rank: Jack, suit: Clubs },
-        Card { rank: Four, suit: Spades },
+        Card { rank: Nine, suit: Clubs },
         Card { rank: Ten, suit: Clubs },
         Card { rank: Ace, suit: Clubs },
         Card { rank: King, suit: Clubs },
