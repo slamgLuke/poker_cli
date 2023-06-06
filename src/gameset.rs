@@ -41,12 +41,6 @@ impl Player {
         self.bet = 0;
         self.folded = false;
     }
-
-    pub fn place_bet(&mut self, game: &mut Game) {
-        todo!();
-        game.pot += game.bet - self.bet;
-        self.bet = game.bet;
-    }
 }
 
 pub struct Game {
@@ -114,27 +108,32 @@ impl Game {
     }
 
     fn advance(&mut self) {
+        // advance
         let len = self.players.len();
         self.turn.1 = (self.turn.1 + 1) % len;
-
-        let mut last: i32 = -1;
-        if let Some(l) = self.last {
-            last = l as i32;
+        // find last player
+        let mut last_index: i32 = -1;
+        if let Some(player) = self.last {
+            last_index = player as i32;
         } else {
             for i in (0..len).rev() {
                 if self.players[i].is_playing && !self.players[i].folded {
-                    last = i as i32;
+                    last_index = i as i32;
                     break;
                 }
             }
         }
-        if last == -1 {
+        // No playing players left
+        if last_index == -1 {
             panic!("No players left!");
-        } else if self.turn.1 == last as usize {
+        } else if self.turn.1 == last_index as usize {
+            // Round passes
             if self.looped {
-                self.turn.0.next();
                 self.bet = 0;
                 self.looped = false;
+                self.turn.0.next();
+                // TODO: Check if (self.turn.0 == Round::Showdown), execute showdown function
+                // TODO: Check if there is more than one player playing, if not, end game and declare winner
             }
             self.looped = true;
         }
@@ -148,11 +147,12 @@ impl Game {
         use crate::playerinput::*;
 
         let current_player = &mut self.players[self.turn.1];
-        if current_player.folded && !current_player.is_playing {
+        if current_player.folded || !current_player.is_playing {
             println!("{} is out of the game! Turn skipped", current_player.name);
             self.advance();
             return;
         }
+        // Player main loop
         println!("{}'s turn", current_player.name);
         loop {
             if let Ok(action) = get_action() {
@@ -177,8 +177,8 @@ impl Game {
                             continue;
                         }
                         self.bet = amount;
-                        current_player.bet(amount - current_player.bet);
                         self.last = Some(self.turn.1);
+                        // TODO: Calculate player balance
                         break;
                     }
                     Action::Call => {
@@ -189,7 +189,7 @@ impl Game {
                             );
                             continue;
                         }
-                        current_player.bet(self.bet - current_player.bet);
+                        // TODO: Calculate player balance
                         break;
                     }
                     Action::Fold => {
@@ -201,6 +201,7 @@ impl Game {
                 println!("Invalid action!");
             }
         }
+        // TODO: Check if player raised all-in
         self.advance();
     }
 
