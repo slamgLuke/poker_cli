@@ -42,9 +42,10 @@ impl Player {
         self.folded = false;
     }
 
-    pub fn bet(&mut self, amount: u32) {
-        self.balance -= amount;
-        self.bet += amount;
+    pub fn place_bet(&mut self, game: &mut Game) {
+        todo!();
+        game.pot += game.bet - self.bet;
+        self.bet = game.bet;
     }
 }
 
@@ -56,6 +57,7 @@ pub struct Game {
     pub pot: u32,
     pub bet: u32,
     last: Option<usize>,
+    looped: bool,
 }
 
 impl Game {
@@ -77,6 +79,7 @@ impl Game {
             pot: 0,
             bet: min_bet * 2,
             last: None,
+            looped: false,
         };
         new_game.setup_deck();
         new_game.deal();
@@ -111,25 +114,34 @@ impl Game {
     }
 
     fn advance(&mut self) {
-        todo!();
         let len = self.players.len();
         self.turn.1 = (self.turn.1 + 1) % len;
-        
-        let mut last = 0;
+
+        let mut last: i32 = -1;
         if let Some(l) = self.last {
-            last = l;
+            last = l as i32;
         } else {
             for i in (0..len).rev() {
                 if self.players[i].is_playing && !self.players[i].folded {
-                    last = i;
+                    last = i as i32;
                     break;
                 }
             }
         }
-
-        if self.turn.1 == last {
-            self.turn.0.next();
+        if last == -1 {
+            panic!("No players left!");
+        } else if self.turn.1 == last as usize {
+            if self.looped {
+                self.turn.0.next();
+                self.bet = 0;
+                self.looped = false;
+            }
+            self.looped = true;
         }
+    }
+
+    fn showdown(&mut self) {
+        todo!()
     }
 
     pub fn play_turn(&mut self) {
@@ -137,9 +149,11 @@ impl Game {
 
         let current_player = &mut self.players[self.turn.1];
         if current_player.folded && !current_player.is_playing {
+            println!("{} is out of the game! Turn skipped", current_player.name);
             self.advance();
             return;
         }
+        println!("{}'s turn", current_player.name);
         loop {
             if let Ok(action) = get_action() {
                 match action {
@@ -162,7 +176,7 @@ impl Game {
                             );
                             continue;
                         }
-                        self.bet += amount;
+                        self.bet = amount;
                         current_player.bet(amount - current_player.bet);
                         self.last = Some(self.turn.1);
                         break;

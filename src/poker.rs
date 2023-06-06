@@ -51,6 +51,7 @@ pub enum Suit {
     Clubs,
 }
 
+#[derive(Debug)]
 pub enum Round {
     PreFlop,
     Flop,
@@ -60,14 +61,15 @@ pub enum Round {
 }
 
 impl Round {
-    pub fn next(&self) -> Round {
-        match self {
+    pub fn next(&mut self) {
+        let new_round = match self {
             Round::PreFlop => Round::Flop,
             Round::Flop => Round::Turn,
             Round::Turn => Round::River,
             Round::River => Round::Showdown,
             Round::Showdown => panic!("Tried to continue when game is over!"),
-        }
+        };
+        *self = new_round;
     }
 }
 
