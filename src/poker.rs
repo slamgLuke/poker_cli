@@ -9,8 +9,6 @@ pub const TABLE_SIZE: usize = 5;
 pub const HAND_SIZE: usize = 5;
 pub const DECK_SIZE: usize = 52;
 
-pub const INITIAL_BALANCE: u32 = 500;
-
 pub const RANKS: [Rank; 13] = [
     Rank::Two,
     Rank::Three,
@@ -59,6 +57,18 @@ pub enum Round {
     Turn,
     River,
     Showdown,
+}
+
+impl Round {
+    pub fn next(&self) -> Round {
+        match self {
+            Round::PreFlop => Round::Flop,
+            Round::Flop => Round::Turn,
+            Round::Turn => Round::River,
+            Round::River => Round::Showdown,
+            Round::Showdown => panic!("Tried to continue when game is over!"),
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
