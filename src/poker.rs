@@ -51,7 +51,7 @@ pub enum Suit {
     Clubs,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Round {
     PreFlop,
     Flop,

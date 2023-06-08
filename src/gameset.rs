@@ -26,7 +26,7 @@ impl Player {
         }
     }
 
-    pub fn hand(&self, game: &Game) -> Hand {
+    pub fn get_hand(&self, game: &Game) -> Hand {
         let cards: Vec<Card> = self
             .hole
             .iter()
@@ -107,6 +107,31 @@ impl Game {
         }
     }
 
+    fn get_winner(&mut self) -> Vec<&Player> {
+        let mut remaining_players = self
+            .players
+            .iter()
+            .filter(|p| p.is_playing && !p.folded)
+            .collect::<Vec<_>>();
+
+        if remaining_players.len() == 1 {
+            return remaining_players;
+        }
+
+        remaining_players.sort_by(|a, b| b.get_hand(self).cmp(&a.get_hand(self)));
+        let winner_hand = remaining_players[0].get_hand(self);
+
+        let mut winners: Vec<&Player> = Vec::new();
+        for player in remaining_players.iter() {
+            if player.get_hand(self) == winner_hand {
+                winners.push(*player);
+            } else {
+                break;
+            }
+        }
+        winners
+    }
+
     fn advance(&mut self) {
         // advance
         let len = self.players.len();
@@ -132,15 +157,25 @@ impl Game {
                 self.bet = 0;
                 self.looped = false;
                 self.turn.0.next();
-                // TODO: Check if (self.turn.0 == Round::Showdown), execute showdown function
-                // TODO: Check if there is more than one player playing, if not, end game and declare winner
+                // Check if (self.turn.0 == Round::Showdown), execute showdown function
+                if self.turn.0 == Round::Showdown {
+                    self.end_game(self.get_winner().as_slice());
+                    return;
+                }
+                // Check if there is more than one player playing, if not, end game and declare winner
+                let mut playing_players = 0;
+                for player in self.players.iter() {
+                    if player.is_playing && !player.folded {
+                        playing_players += 1;
+                    }
+                }
+                if playing_players == 1 {
+                    self.end_game(self.get_winner().as_slice());
+                    return;
+                }
             }
             self.looped = true;
         }
-    }
-
-    fn showdown(&mut self) {
-        todo!()
     }
 
     pub fn play_turn(&mut self) {
@@ -158,7 +193,7 @@ impl Game {
             if let Ok(action) = get_action() {
                 match action {
                     Action::Check => {
-                        if self.bet > 0 {
+                        if current_player.bet == self.bet {
                             println!("Can't check! Current bet is {}$", self.bet);
                             continue;
                         }
@@ -178,7 +213,11 @@ impl Game {
                         }
                         self.bet = amount;
                         self.last = Some(self.turn.1);
-                        // TODO: Calculate player balance
+                        // Calculate pot and player balance
+                        let difference = amount - current_player.bet;
+                        current_player.bet = amount;
+                        current_player.balance -= difference;
+                        self.pot += difference;
                         break;
                     }
                     Action::Call => {
@@ -189,7 +228,11 @@ impl Game {
                             );
                             continue;
                         }
-                        // TODO: Calculate player balance
+                        // Calculate player balance
+                        let difference = self.bet - current_player.bet;
+                        current_player.bet = self.bet;
+                        current_player.balance -= difference;
+                        self.pot += difference;
                         break;
                     }
                     Action::Fold => {
@@ -203,6 +246,18 @@ impl Game {
         }
         // TODO: Check if player raised all-in
         self.advance();
+    }
+
+    fn end_game(&mut self, winners: &[&Player]) {
+        println!("Game ended!");
+        for winner in winners {
+            println!("{} won {}$", winner.name, self.pot / winners.len() as u32);
+            self.players
+                .iter_mut()
+                .find(|p| p.name == winner.name)
+                .unwrap()
+                .balance += self.pot / winners.len() as u32;
+        }
     }
 
     pub fn print_table(&self) {

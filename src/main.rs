@@ -24,7 +24,7 @@ fn game_1() {
     game.print_table();
 
     for p in game.players.iter() {
-        let hand = p.hand(&game);
+        let hand = p.get_hand(&game);
         println!("{:?}", hand);
     }
 }
