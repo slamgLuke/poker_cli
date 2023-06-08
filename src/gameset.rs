@@ -5,6 +5,7 @@ use rand::seq::SliceRandom;
 
 const INITIAL_BALANCE: u32 = 500;
 
+#[derive(Debug, Clone)]
 pub struct Player {
     pub name: String,
     pub hole: Vec<Card>,
@@ -50,36 +51,12 @@ pub struct Game {
     pub turn: (Round, usize),
     pub pot: u32,
     pub bet: u32,
+    pub ended: bool,
     last: Option<usize>,
     looped: bool,
 }
 
 impl Game {
-    pub fn new(mut players: Vec<Player>, min_bet: u32, is_first_game: bool) -> Game {
-        if is_first_game {
-            let mut rng = rand::thread_rng();
-            players.shuffle(&mut rng);
-        }
-        for player in players.iter_mut() {
-            if player.balance < min_bet * 2 {
-                player.is_playing = false;
-            }
-        }
-        let mut new_game = Game {
-            players,
-            table: Vec::new(),
-            deck: Vec::new(),
-            turn: (Round::PreFlop, 0),
-            pot: 0,
-            bet: min_bet * 2,
-            last: None,
-            looped: false,
-        };
-        new_game.setup_deck();
-        new_game.deal();
-        new_game
-    }
-
     fn setup_deck(&mut self) {
         self.deck = Vec::new();
 
@@ -107,29 +84,30 @@ impl Game {
         }
     }
 
-    fn get_winner(&mut self) -> Vec<&Player> {
-        let mut remaining_players = self
-            .players
-            .iter()
-            .filter(|p| p.is_playing && !p.folded)
-            .collect::<Vec<_>>();
-
-        if remaining_players.len() == 1 {
-            return remaining_players;
+    pub fn new(mut players: Vec<Player>, min_bet: u32, is_first_game: bool) -> Game {
+        if is_first_game {
+            let mut rng = rand::thread_rng();
+            players.shuffle(&mut rng);
         }
-
-        remaining_players.sort_by(|a, b| b.get_hand(self).cmp(&a.get_hand(self)));
-        let winner_hand = remaining_players[0].get_hand(self);
-
-        let mut winners: Vec<&Player> = Vec::new();
-        for player in remaining_players.iter() {
-            if player.get_hand(self) == winner_hand {
-                winners.push(*player);
-            } else {
-                break;
+        for player in players.iter_mut() {
+            if player.balance < min_bet * 2 {
+                player.is_playing = false;
             }
         }
-        winners
+        let mut new_game = Game {
+            players,
+            table: Vec::new(),
+            deck: Vec::new(),
+            turn: (Round::PreFlop, 0),
+            pot: 0,
+            bet: min_bet * 2,
+            ended: false,
+            last: None,
+            looped: false,
+        };
+        new_game.setup_deck();
+        new_game.deal();
+        new_game
     }
 
     fn advance(&mut self) {
@@ -142,7 +120,7 @@ impl Game {
             last_index = player as i32;
         } else {
             for i in (0..len).rev() {
-                if self.players[i].is_playing && !self.players[i].folded {
+                if self.players[i].is_playing {
                     last_index = i as i32;
                     break;
                 }
@@ -157,20 +135,23 @@ impl Game {
                 self.bet = 0;
                 self.looped = false;
                 self.turn.0.next();
-                // Check if (self.turn.0 == Round::Showdown), execute showdown function
-                if self.turn.0 == Round::Showdown {
-                    self.end_game(self.get_winner().as_slice());
-                    return;
-                }
-                // Check if there is more than one player playing, if not, end game and declare winner
-                let mut playing_players = 0;
-                for player in self.players.iter() {
-                    if player.is_playing && !player.folded {
-                        playing_players += 1;
+                // set players who folded to not playing
+                for player in self.players.iter_mut() {
+                    if player.folded {
+                        player.is_playing = false;
+                        player.folded = false;
                     }
                 }
-                if playing_players == 1 {
-                    self.end_game(self.get_winner().as_slice());
+                // Check if (self.turn.0 == Round::Showdown), or if there is only one player playing
+                if self.turn.0 == Round::Showdown
+                    || self
+                        .players
+                        .iter()
+                        .filter(|p| p.is_playing && !p.folded)
+                        .count()
+                        == 1
+                {
+                    self.end_game();
                     return;
                 }
             }
@@ -193,18 +174,20 @@ impl Game {
             if let Ok(action) = get_action() {
                 match action {
                     Action::Check => {
-                        if current_player.bet == self.bet {
+                        if current_player.bet < self.bet {
                             println!("Can't check! Current bet is {}$", self.bet);
                             continue;
                         }
                         break;
                     }
                     Action::Raise(amount) => {
+                        let difference = amount - current_player.bet;
+                        
                         if amount <= self.bet {
                             println!("Must raise higher than the current bet! {}$", self.bet);
                             continue;
                         }
-                        if amount - current_player.bet > current_player.balance {
+                        if difference > current_player.balance {
                             println!(
                                 "You don't have enough money! {}$ remaining",
                                 current_player.balance
@@ -214,7 +197,6 @@ impl Game {
                         self.bet = amount;
                         self.last = Some(self.turn.1);
                         // Calculate pot and player balance
-                        let difference = amount - current_player.bet;
                         current_player.bet = amount;
                         current_player.balance -= difference;
                         self.pot += difference;
@@ -248,40 +230,60 @@ impl Game {
         self.advance();
     }
 
-    fn end_game(&mut self, winners: &[&Player]) {
+    fn end_game(&mut self) {
+        let mut remaining_players: Vec<Player> = self
+            .players
+            .iter()
+            .filter(|p| p.is_playing)
+            .cloned()
+            .collect();
+
         println!("Game ended!");
-        for winner in winners {
-            println!("{} won {}$", winner.name, self.pot / winners.len() as u32);
-            self.players
-                .iter_mut()
-                .find(|p| p.name == winner.name)
-                .unwrap()
-                .balance += self.pot / winners.len() as u32;
+        for player in remaining_players.iter_mut() {
+            println!("{}'s hand:", player.name);
         }
+
+        remaining_players.sort_by(|a, b| b.get_hand(self).cmp(&a.get_hand(self)));
+        let winner_hand = remaining_players[0].get_hand(self);
+        // Remove players with worse hands than the winner hand
+        remaining_players.retain(|p| p.get_hand(self) == winner_hand);
+        let num_winners = remaining_players.len();
+
+        println!("Winners:");
+        for winner in remaining_players.iter_mut() {
+            println!("{} won {}$", winner.name, self.pot / num_winners as u32);
+            let new_balance = self.pot / num_winners as u32;
+            winner.balance += new_balance;
+        }
+        self.ended = true;
     }
 
     pub fn print_table(&self) {
-        match self.turn {
-            (Round::PreFlop, p) => println!("PreFlop: {}'s turn", self.players[p].name),
-            (Round::Flop, p) => println!("Flop: {}'s turn", self.players[p].name),
-            (Round::Turn, p) => println!("Turn: {}'s turn", self.players[p].name),
-            (Round::River, p) => println!("River: {}'s turn", self.players[p].name),
-            (Round::Showdown, _) => println!("Showdown"),
-        }
-
-        println!("Table:");
-        for card in self.table.iter() {
-            println!("{:?} of {:?}", card.rank, card.suit);
-        }
-        println!("====================");
-
-        for (i, player) in self.players.iter().enumerate() {
-            println!("{})", i);
-            println!("{}'s hand:", player.name);
-            for card in player.hole.iter() {
-                println!("{:?} of {:?}", card.rank, card.suit);
+        let card_number = match self.turn {
+            (Round::PreFlop, p) => {
+                println!("PreFlop: {}'s turn", self.players[p].name);
+                0
             }
+            (Round::Flop, p) => {
+                println!("Flop: {}'s turn", self.players[p].name);
+                3
+            }
+            (Round::Turn, p) => {
+                println!("Turn: {}'s turn", self.players[p].name);
+                4
+            }
+            (Round::River, p) => {
+                println!("River: {}'s turn", self.players[p].name);
+                5
+            }
+            (Round::Showdown, _) => {
+                println!("Showdown");
+                5
+            }
+        };
+        println!("Table:");
+        for i in 0..card_number {
+            println!("{:?} of {:?}", self.table[i].rank, self.table[i].suit);
         }
-        println!();
     }
 }

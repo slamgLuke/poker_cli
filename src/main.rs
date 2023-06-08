@@ -47,10 +47,11 @@ fn game_2() {
     let players = vec![a, b, c, d, e, f];
 
     let mut game = Game::new(players, 5, false);
-    loop {
+    while !game.ended {
         game.play_turn();
         println!("Pot: {}, bet: {}, round: {:?}", game.pot, game.bet, game.turn);
     }
+    game.print_table();
 }
 
 fn main() {
