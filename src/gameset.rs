@@ -103,7 +103,7 @@ impl Game {
             bet: min_bet * 2,
             ended: false,
             last: None,
-            looped: false,
+            looped: true,
         };
         new_game.setup_deck();
         new_game.deal();
@@ -119,7 +119,7 @@ impl Game {
         if let Some(player) = self.last {
             last_index = player as i32;
         } else {
-            for i in (0..len).rev() {
+            for i in 0..len {
                 if self.players[i].is_playing {
                     last_index = i as i32;
                     break;
@@ -137,6 +137,7 @@ impl Game {
                 self.turn.0.next();
                 // set players who folded to not playing
                 for player in self.players.iter_mut() {
+                    player.bet = 0;
                     if player.folded {
                         player.is_playing = false;
                         player.folded = false;
@@ -240,7 +241,7 @@ impl Game {
 
         println!("Game ended!");
         for player in remaining_players.iter_mut() {
-            println!("{}'s hand:", player.name);
+            println!("{}'s hand: {:?}", player.name, player.get_hand(&self));
         }
 
         remaining_players.sort_by(|a, b| b.get_hand(self).cmp(&a.get_hand(self)));

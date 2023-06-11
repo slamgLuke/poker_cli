@@ -48,8 +48,8 @@ fn game_2() {
 
     let mut game = Game::new(players, 5, false);
     while !game.ended {
-        game.play_turn();
         println!("Pot: {}, bet: {}, round: {:?}", game.pot, game.bet, game.turn);
+        game.play_turn();
     }
     game.print_table();
 }
